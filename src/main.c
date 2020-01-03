@@ -84,7 +84,6 @@ NodeUC  * lerUC(){
     char * linha;
     if(f == NULL){
         printf("Erro: Não foi possivel abrir o ficheiro!");
-        fflush(stdout);
         exit(1);
     }
     printf("%s", linha);
