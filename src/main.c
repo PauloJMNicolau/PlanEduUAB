@@ -12,11 +12,14 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <limits.h>
 
 /***********************
  * Constantes / Macro  *
  * ********************/
 #define STR 50
+#define FILEPATH "uc.txt"
 
 /************************
  * Estruturas de Dados  *
@@ -80,7 +83,7 @@ NodeUC  * lerUC(){
     listaUnidades->atual == NULL;
     listaUnidades->proxima == NULL;
     FILE * f;
-    f = fopen("uc.txt", "rt");
+    f = fopen("uc.txt", "r");
     char * linha;
     if(!f){
         printf("Erro: Não foi possivel abrir o ficheiro!");
