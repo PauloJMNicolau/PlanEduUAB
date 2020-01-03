@@ -5,11 +5,15 @@
  *                          *
  ***************************/
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <limits.h>
+#include <stdbool.h>
 
-
+#include <dirent.h> 
 /***********************
  * Constantes / Macro  *
  * ********************/
@@ -76,14 +80,17 @@ NodeUC  * lerUC(){
     NodeUC  * listaUnidades;
     listaUnidades->atual == NULL;
     listaUnidades->proxima == NULL;
-    FILE *f = fopen("uc.txt", "rt");
+    FILE *f = fopen("uc.txt", "r");
     char * linha;
     if(f == NULL){
         printf("Erro: Não foi possivel abrir o ficheiro!");
+        fflush(stdout);
         exit(1);
     }
+    printf("%s", linha);
+    fflush(stdout);
     fgets(linha,STR,f);
-    printf(linha);
+    printf("%s", linha);
     fflush(stdout);
     while (linha != NULL){
         adicionarUC(listaUnidades, criaUC(linha));
