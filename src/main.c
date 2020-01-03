@@ -13,7 +13,6 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#include <dirent.h> 
 /***********************
  * Constantes / Macro  *
  * ********************/
@@ -80,14 +79,13 @@ NodeUC  * lerUC(){
     NodeUC  * listaUnidades;
     listaUnidades->atual == NULL;
     listaUnidades->proxima == NULL;
-    FILE *f = fopen("uc.txt", "r");
+    FILE * f;
+    f = fopen("uc.txt", "rt");
     char * linha;
-    if(f == NULL){
+    if(!f){
         printf("Erro: Não foi possivel abrir o ficheiro!");
         exit(1);
     }
-    printf("%s", linha);
-    fflush(stdout);
     fgets(linha,STR,f);
     printf("%s", linha);
     fflush(stdout);
