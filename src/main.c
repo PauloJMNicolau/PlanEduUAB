@@ -25,24 +25,35 @@
  * Estruturas de Dados  *
  * *********************/
 
-//Estrutura Unidade Curricular
+
+//Estrutura Atividades da UC
 typedef struct{
-    int numero;
-    char * nome;
     int inicio;
     int fim;
     int realizado;
     int num_sessao;
+    char * nomeAtividade;
+} AtividadeUC;
+
+//Estrutura Lista de Atividades
+typedef struct nodeAct{
+    AtividadeUC * atual;
+    struct nodeAct * proxima;
+} NodeAtividade;
+
+//Estrutura Unidade Curricular
+typedef struct{
+    int numero;
+    char * nome;
+    NodeAtividade * atividades;
 } UC;
 
-typedef struct{
-    
-}
 //Estrutura Lista Unidades Curiculares
 typedef struct node{
     UC * atual;
     struct node * proxima;
 } NodeUC;
+
 
 /************
  * Headers  *
@@ -92,6 +103,9 @@ void eliminarUCs(NodeUC * lista){
     }
 }
 
+
+
+
 /************************
  *  Funções Auxiliares  *
  * *********************/
@@ -119,15 +133,15 @@ void removerEspacoEnd(char * palavra){
     palavra[index+1]='\0';
 }
 void removerEspacos(char * palavra){
-    removerEspacosInit(palavra);
-    removerEspacoEnd(palavra);
+    if(palavra){
+        removerEspacosInit(palavra);
+        removerEspacoEnd(palavra);
+    }
+    
 }
 
 //Cria Unidades Curriculares
-UC * criaUC(char * linha){
-    if(strcmp(linha,"\n")){
-
-    
+UC * criaUC(char * linha){  
     UC * unidadeCurricular = malloc(sizeof(UC));
     unidadeCurricular->nome= malloc(STR * sizeof(char));
     if(!unidadeCurricular){
@@ -141,9 +155,6 @@ UC * criaUC(char * linha){
     removerEspacos(parte);
     strcpy(unidadeCurricular->nome,parte);
     return unidadeCurricular;
-    }
-    return NULL;
-    
 }
 
 //Liberta Memoria das Unidades Curriculares
@@ -155,18 +166,29 @@ void apagaUC(UC * ucs){
     }
 }
 
-//Ler ficheiro  para criar Unidades Curriculares
-NodeUC  * lerUC(){
+NodeUC  * lerFicheiro(char * ficheiro){
     NodeUC  * listaUnidades =NULL;
     FILE * f;
-    f = fopen("uc.txt", "r");
-    char linha[STR];
+    int linhaVazia=0;
+    f = fopen(ficheiro, "r");
     if(!f){
         printf("Erro: Não foi possivel abrir o ficheiro!");
         exit(1);
     }
-    while (fgets(linha,STR,f)!= NULL){
-        listaUnidades = adicionarNode(listaUnidades, criarNodeUC(criaUC(linha)));
+    char linha[STR];
+    while(fgets(linha,STR,f)!=NULL){
+        if(!strcmp(linha,"\n"))
+            linhaVazia++;
+        else {
+            if(linhaVazia==0){
+                listaUnidades = adicionarNode(listaUnidades, criarNodeUC(criaUC(linha)));
+            } else if(linhaVazia==1){
+                printf("d");
+            } else{
+                printf("r");
+            }
+            
+        }
     }
     fclose(f);
     return listaUnidades;
@@ -210,8 +232,9 @@ int contaCaracteres(NodeUC * lista){
 int main() {
     //FILE *f=stdin; // ler os dados do stdin
     NodeUC  * listaUnidades=NULL;
-    listaUnidades = lerUC();
+    listaUnidades=lerFicheiro("uc.txt");
     printf("%d ",contaCaracteres(listaUnidades));
     eliminarUCs(listaUnidades);
+    
     listaUnidades=NULL;
 }
