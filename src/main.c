@@ -18,7 +18,7 @@
 /***********************
  * Constantes / Macro  *
  * ********************/
-#define STR 50
+#define STR 100
 
 
 /************************
@@ -29,8 +29,15 @@
 typedef struct{
     int numero;
     char * nome;
+    int inicio;
+    int fim;
+    int realizado;
+    int num_sessao;
 } UC;
 
+typedef struct{
+    
+}
 //Estrutura Lista Unidades Curiculares
 typedef struct node{
     UC * atual;
@@ -118,6 +125,9 @@ void removerEspacos(char * palavra){
 
 //Cria Unidades Curriculares
 UC * criaUC(char * linha){
+    if(strcmp(linha,"\n")){
+
+    
     UC * unidadeCurricular = malloc(sizeof(UC));
     unidadeCurricular->nome= malloc(STR * sizeof(char));
     if(!unidadeCurricular){
@@ -131,6 +141,9 @@ UC * criaUC(char * linha){
     removerEspacos(parte);
     strcpy(unidadeCurricular->nome,parte);
     return unidadeCurricular;
+    }
+    return NULL;
+    
 }
 
 //Liberta Memoria das Unidades Curriculares
@@ -175,6 +188,7 @@ void imprimirLista(NodeUC * uc){
  *  Código Alinea A     *
  * *********************/
 
+//Contar os caracteres do nome das UC da Lista
 int contaCaracteres(NodeUC * lista){
     int contar = 0;
     while(lista!= NULL){
@@ -184,6 +198,11 @@ int contaCaracteres(NodeUC * lista){
     return contar;
 }
 
+/************************
+ *  Código Alinea B    *
+ * *********************/
+
+
 
 /************************
  *  Função Principal    *
@@ -192,7 +211,6 @@ int main() {
     //FILE *f=stdin; // ler os dados do stdin
     NodeUC  * listaUnidades=NULL;
     listaUnidades = lerUC();
-    imprimirLista(listaUnidades);
     printf("%d ",contaCaracteres(listaUnidades));
     eliminarUCs(listaUnidades);
     listaUnidades=NULL;
