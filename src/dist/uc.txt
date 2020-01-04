@@ -1,0 +1,5 @@
+21002 - Álgebra Linear I     
+21010 - Arquitetura de Computadores
+21174 - Sistemas Computacionais
+21175 - Análise Infinitesimal
+21173 - Introdução à Programação

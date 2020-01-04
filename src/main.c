@@ -12,105 +12,172 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
+
 #include <unistd.h>
-#include <limits.h>
 
 /***********************
  * Constantes / Macro  *
  * ********************/
 #define STR 50
-#define FILEPATH "uc.txt"
+
 
 /************************
  * Estruturas de Dados  *
  * *********************/
+
+//Estrutura Unidade Curricular
 typedef struct{
     int numero;
     char * nome;
 } UC;
 
+//Estrutura Lista Unidades Curiculares
 typedef struct node{
     UC * atual;
     struct node * proxima;
 } NodeUC;
 
+/************
+ * Headers  *
+ * *********/
+void apagaUC(UC * ucs);
+
+
 /************************
  * Metodos Estruturas   *
  ***********************/
 
-void adicionarUC(NodeUC  * lista, UC * unidade){
-    printf("D"); fflush(stdout);
-    if(lista->atual == NULL){
-        lista->atual = unidade;
-        lista->proxima = NULL;
-    } else{
-        NodeUC * novo;
-        novo->atual = unidade;
-        novo->proxima = NULL;
-        NodeUC * uc = lista->proxima;
-        while(uc != NULL){
-            uc = uc->proxima;
+//Adicionar Elemento no fim da lista
+NodeUC * adicionarNode(NodeUC * lista, NodeUC * novo){
+    if(lista==NULL){
+        return novo;
+    }
+    if(lista->proxima==NULL){
+        lista->proxima = novo;
+        return lista;
+    }
+    adicionarNode(lista->proxima, novo);
+    return lista;
+}
+
+//Cria Nó do elemento a adicionar na lista
+NodeUC * criarNodeUC(UC * unidade){
+    NodeUC * novo = malloc(sizeof(NodeUC));
+    if(!novo){
+        printf("Erro: Não foi possivel alocar memoria para o elemento da lista");
+        exit(1);
+    }
+    novo->atual = unidade;
+    novo->proxima = NULL;
+    return novo;
+}
+
+//Apagar Lista (Libertar Memoria)
+void eliminarUCs(NodeUC * lista){
+    if(lista!= NULL){
+        if(lista->proxima!= NULL){
+            eliminarUCs(lista->proxima);
         }
-        uc->proxima = novo;
+        apagaUC(lista->atual);
+        lista->atual=NULL;
+        free(lista);
+        lista = NULL;
     }
 }
 
 /************************
- *  Código Alinea A     *
+ *  Funções Auxiliares  *
  * *********************/
 
+//Imprimir UC
+void imprimeUC(UC * ucs){
+    printf("%d - %s\n", ucs->numero, ucs->nome);
+}
+
+//Funções para remover espaços brancos no inicio e fim do nome
+void removerEspacosInit(char * palavra){
+    int index = 0;
+    while(palavra[index]==' '){
+        index++;
+    }
+    for(int i=0; i< (int)strlen(palavra); i++){
+        palavra[i]= palavra[index++];
+    }
+}
+void removerEspacoEnd(char * palavra){
+    int index = strlen(palavra)-1;
+    while(palavra[index]==' '){
+        index--;
+    }
+    palavra[index+1]='\0';
+}
+void removerEspacos(char * palavra){
+    removerEspacosInit(palavra);
+    removerEspacoEnd(palavra);
+}
+
+//Cria Unidades Curriculares
 UC * criaUC(char * linha){
-    printf("H");
     UC * unidadeCurricular = malloc(sizeof(UC));
+    unidadeCurricular->nome= malloc(STR * sizeof(char));
+    if(!unidadeCurricular){
+        printf("Erro: Não foi possivel alcar memoria para a unidade curricular");
+        exit(1);
+    }
     char * parte;
     parte = strtok(linha,"-");
-    unidadeCurricular->numero = atoi(parte);
-    unidadeCurricular->nome = strtok(linha," ");
+    unidadeCurricular->numero=atoi(parte);
+    parte = strtok(NULL,"\n");
+    removerEspacos(parte);
+    strcpy(unidadeCurricular->nome,parte);
     return unidadeCurricular;
 }
 
-void apagaUC(NodeUC * ucs){
-    NodeUC * lista = ucs;
-    while(lista != NULL){
-        free(lista->atual);
-        lista->atual = lista->proxima->atual;
-        lista->proxima = lista->proxima->proxima;
+//Liberta Memoria das Unidades Curriculares
+void apagaUC(UC * ucs){
+    if(ucs != NULL){
+        free(ucs->nome);
+        free(ucs);
+        ucs = NULL;
     }
 }
 
+//Ler ficheiro  para criar Unidades Curriculares
 NodeUC  * lerUC(){
-    NodeUC  * listaUnidades;
-    listaUnidades->atual == NULL;
-    listaUnidades->proxima == NULL;
+    NodeUC  * listaUnidades =NULL;
     FILE * f;
     f = fopen("uc.txt", "r");
-    char * linha;
+    char linha[STR];
     if(!f){
         printf("Erro: Não foi possivel abrir o ficheiro!");
         exit(1);
     }
-    fgets(linha,STR,f);
-    printf("%s", linha);
-    fflush(stdout);
-    while (linha != NULL){
-        adicionarUC(listaUnidades, criaUC(linha));
+    while (fgets(linha,STR,f)!= NULL){
+        listaUnidades = adicionarNode(listaUnidades, criarNodeUC(criaUC(linha)));
     }
     fclose(f);
     return listaUnidades;
 }
 
-void imprimirUC(NodeUC * uc){
-    while(uc->atual != NULL){
-        printf("%d - %s", uc->atual->numero, uc->atual->nome);
+//Imprimir Lista 
+void imprimirLista(NodeUC * uc){
+    if(uc != NULL){
+        imprimeUC(uc->atual);
         if(uc->proxima != NULL){
-            imprimirUC(uc->proxima);
+            imprimirLista(uc->proxima);
         }
     }
 }
 
+//
 
+/************************
+ *  Código Alinea A     *
+ * *********************/
 
 int contaCaracteres(){
+    int conta=0;
+
     return 0;
 }
 
@@ -119,9 +186,9 @@ int contaCaracteres(){
  * *********************/
 int main() {
     //FILE *f=stdin; // ler os dados do stdin
-    NodeUC  * listaUnidades;
+    NodeUC  * listaUnidades=NULL;
     listaUnidades = lerUC();
-
-
-   //imprimirUC(listaUnidades);
+    imprimirLista(listaUnidades);
+    eliminarUCs(listaUnidades);
+    listaUnidades=NULL;
 }
