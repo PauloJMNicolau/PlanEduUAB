@@ -169,17 +169,21 @@ void imprimirLista(NodeUC * uc){
     }
 }
 
-//
+
 
 /************************
  *  Código Alinea A     *
  * *********************/
 
-int contaCaracteres(){
-    int conta=0;
-
-    return 0;
+int contaCaracteres(NodeUC * lista){
+    int contar = 0;
+    while(lista!= NULL){
+        contar += strlen(lista->atual->nome);
+        lista = lista->proxima;
+    }
+    return contar;
 }
+
 
 /************************
  *  Função Principal    *
@@ -189,6 +193,7 @@ int main() {
     NodeUC  * listaUnidades=NULL;
     listaUnidades = lerUC();
     imprimirLista(listaUnidades);
+    printf("%d ",contaCaracteres(listaUnidades));
     eliminarUCs(listaUnidades);
     listaUnidades=NULL;
 }
