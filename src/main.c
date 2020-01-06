@@ -25,9 +25,9 @@
  * Estruturas de Dados  *
  * *********************/
 
-
 //Estrutura Atividades da UC
 typedef struct{
+    int idUC;
     int inicio;
     int fim;
     int realizado;
@@ -54,6 +54,10 @@ typedef struct node{
     struct node * proxima;
 } NodeUC;
 
+typedef struct{
+    NodeUC * ucs;
+    NodeAtividade * atividades;
+} Dados;
 
 /************
  * Headers  *
@@ -65,6 +69,29 @@ void apagaAtividade(AtividadeUC * atividade);
 /************************
  * Metodos Estruturas   *
  ***********************/
+
+//Inicia valores de UC
+void iniciaUC(UC * ucs){
+    ucs->numero = 0;
+    ucs->nome = NULL;
+    ucs->atividades = NULL;
+}
+
+//Inicia valores de Atividade
+void iniciaAtividade(AtividadeUC * atividade){
+    atividade->idUC=0;
+    atividade->inicio=0;
+    atividade->fim=0;
+    atividade->realizado=0;
+    atividade->numSessao=0;
+    atividade->nome=NULL;
+}
+
+//Inicia valores de Dados
+void iniciaDados(Dados * dados){
+    dados->ucs = NULL;
+    dados->atividades=NULL;
+}
 
 //Adicionar Elemento no fim da lista
 NodeUC * adicionarNode(NodeUC * lista, NodeUC * novo){
@@ -115,6 +142,7 @@ NodeAtividade * criarAtividadeNode(AtividadeUC * atividade){
     novo->proxima = NULL;
     return novo;
 }
+
 
 //Apagar Lista UC (Libertar Memoria)
 void eliminarUCs(NodeUC * lista){
@@ -192,29 +220,14 @@ void removerEspacos(char * palavra){
     
 }
 
-//Cria Unidades Curriculares
-UC * criaUC(char * linha){  
-    UC * unidadeCurricular = malloc(sizeof(UC));
-    unidadeCurricular->nome= malloc(STR * sizeof(char));
-    unidadeCurricular->atividades=malloc(sizeof(NodeAtividade));
-    if(!unidadeCurricular || !unidadeCurricular->nome){
-        printf("Erro: Não foi possivel alocar memoria para a unidade curricular");
-        exit(1);
-    }
-    char * parte;
-    parte = strtok(linha,"-");
-    unidadeCurricular->numero=atoi(parte);
-    parte = strtok(NULL,"\n");
-    removerEspacos(parte);
-    strcpy(unidadeCurricular->nome,parte);
-    return unidadeCurricular;
-}
 
 //Liberta Memoria das Unidades Curriculares
 void apagaUC(UC * ucs){
     if(ucs != NULL){
         free(ucs->nome);
+        ucs->nome=NULL;
         eliminarAtividades(ucs->atividades);
+        ucs->atividades=NULL;
         free(ucs);
         ucs = NULL;
     }
@@ -229,10 +242,44 @@ void apagaAtividade(AtividadeUC * atividade){
     }
 }
 
+void libertarMemoria(Dados * dados){
+    eliminarUCs(dados->ucs);
+    eliminarAtividades(dados->atividades);
+    free(dados);
+    dados=NULL;
+}
 
-//Preenche os campos da atividade
-void preencheAtividade(char * str, AtividadeUC * atividade){
+//Cria Unidades Curriculares
+UC * criaUC(char * linha){  
+    UC * unidadeCurricular = malloc(sizeof(UC));
+    iniciaUC(unidadeCurricular);
+    unidadeCurricular->nome= malloc(STR * sizeof(char));
+    if(!unidadeCurricular || !unidadeCurricular->nome){
+        printf("Erro: Não foi possivel alocar memoria para a unidade curricular");
+        exit(1);
+    }
     char * parte;
+    parte = strtok(linha,"-");
+    unidadeCurricular->numero=atoi(parte);
+    parte = strtok(NULL,"\n");
+    removerEspacos(parte);
+    strcpy(unidadeCurricular->nome,parte);
+    return unidadeCurricular;
+}
+
+//Cria Atividades
+AtividadeUC * criaAtividade(char * linha){
+    AtividadeUC * atividade = malloc(sizeof(AtividadeUC));
+    iniciaAtividade(atividade);
+    atividade->nome = malloc(STR * sizeof(char));
+    if(!atividade || !atividade->nome){
+        printf("Erro: Não foi possivel alocar memoria para a atividade");
+        exit(1);
+    }
+    char * parte;
+    
+    parte = strtok(linha,"-");
+    atividade->idUC = atoi(parte);
     for(int i=0; i<4; i++){
         parte = strtok(NULL, "-");
         switch (i){
@@ -253,11 +300,75 @@ void preencheAtividade(char * str, AtividadeUC * atividade){
     parte = strtok(NULL, "\n");
     removerEspacos(parte);
     strcpy(atividade->nome, parte);
+    return atividade;
+}
+
+//Ler Ficheiro de Configurações
+Dados  * lerFicheiro(char * ficheiro){
+    Dados  * informacao=malloc(sizeof(Dados));
+    iniciaDados(informacao);
+    FILE * f;
+    int linhaVazia=0;
+    f = fopen(ficheiro, "r");
+    if(!f){
+        printf("Erro: Não foi possivel abrir o ficheiro!");
+        exit(1);
+    }
+    char linha[STR];
+    while(fgets(linha,STR,f)!=NULL){
+        if(!strcmp(linha,"\n"))
+            linhaVazia++;
+        else {
+            if(linhaVazia==0){
+                informacao->ucs = adicionarNode(informacao->ucs, criarNodeUC(criaUC(linha)));
+            } else if(linhaVazia==1){
+                AtividadeUC * atividade = criaAtividade(linha);
+                UC * uc = NULL;
+                if((uc=procuraUC(informacao->ucs, atividade->idUC))!= NULL){
+                    uc->atividades = adicionarAtividade(uc->atividades,criarAtividadeNode(atividade));
+                } else{
+                    informacao->atividades= adicionarAtividade(informacao->atividades,criarAtividadeNode(atividade));
+                }
+                //criaAtividade(linha,listaUnidades);
+            } else{
+                printf("r");
+            } 
+        }
+    }
+    fclose(f);
+    return informacao;
+}
+
+
+/* //Preenche os campos da atividade
+void preencheAtividade(char * str, AtividadeUC * atividade){
+    char * parte;
+    for(int i=0; i<4; i++){
+        parte = strtok(NULL, "-");
+        switch (i){
+            case 0:
+                atividade->inicio = atoi(parte);
+                break;
+            case 1:
+                atividade->fim = atoi(parte);
+                break;
+            case 2:
+                atividade->realizado = atoi(parte);
+                break;
+            case 3:
+                atividade->numSessao = atoi(parte);
+                break;
+        }
+    }
+    parte = strtok(NULL, "-");
+    removerEspacos(parte);
+    strcpy(atividade->nome, parte);
 }
 
 //Criar Atividades
 AtividadeUC * criaAtividade(char * linha, NodeUC * lista){
     AtividadeUC * atividade = malloc(sizeof(AtividadeUC));
+    iniciaAtividade(atividade);
     atividade->nome = malloc(STR * sizeof(char));
     UC * ucs = NULL;
     if(!atividade || !atividade->nome){
@@ -274,10 +385,14 @@ AtividadeUC * criaAtividade(char * linha, NodeUC * lista){
     }
     preencheAtividade(dados, atividade);
     ucs->atividades = adicionarAtividade(ucs->atividades, criarAtividadeNode(atividade));
-    return atividade;
-}
 
-//Ler Ficheiro de Configurações
+
+
+    printf("%d", ucs->atividades->atual->fim);
+    return atividade;
+} */
+
+/* //Ler Ficheiro de Configurações
 NodeUC  * lerFicheiro(char * ficheiro){
     NodeUC  * listaUnidades =NULL;
     FILE * f;
@@ -295,7 +410,7 @@ NodeUC  * lerFicheiro(char * ficheiro){
             if(linhaVazia==0){
                 listaUnidades = adicionarNode(listaUnidades, criarNodeUC(criaUC(linha)));
             } else if(linhaVazia==1){
-                criaAtividade(linha,listaUnidades);
+                //criaAtividade(linha,listaUnidades);
             } else{
                 printf("r");
             } 
@@ -305,6 +420,7 @@ NodeUC  * lerFicheiro(char * ficheiro){
     return listaUnidades;
 }
 
+ */
 //Imprimir Lista 
 void imprimirLista(NodeUC * uc){
     if(uc != NULL){
@@ -341,11 +457,14 @@ int contaCaracteres(NodeUC * lista){
  * *********************/
 int main() {
     //FILE *f=stdin; // ler os dados do stdin
-    NodeUC  * listaUnidades=NULL;
-    listaUnidades=lerFicheiro("uc.txt");
-    printf("%d ",contaCaracteres(listaUnidades));
-    imprimirLista(listaUnidades);
-    eliminarUCs(listaUnidades);
+    Dados * lista = NULL;
+
+    //NodeUC  * listaUnidades=NULL;
+    lista=lerFicheiro("uc.txt");
+    printf("%d ",contaCaracteres(lista->ucs));
+    imprimirLista(lista->ucs);
     
-    listaUnidades=NULL;
+    
+    libertarMemoria(lista);
+    lista=NULL;
 }
