@@ -190,11 +190,6 @@ UC * procuraUC(NodeUC * lista, int id){
  *  Funções Auxiliares  *
  * *********************/
 
-//Imprimir UC
-void imprimeUC(UC * ucs){
-    printf("%d - %s\n", ucs->numero, ucs->nome);
-}
-
 //Funções para remover espaços brancos no inicio e fim do nome
 void removerEspacosInit(char * palavra){
     int index = 0;
@@ -220,7 +215,6 @@ void removerEspacos(char * palavra){
     
 }
 
-
 //Liberta Memoria das Unidades Curriculares
 void apagaUC(UC * ucs){
     if(ucs != NULL){
@@ -233,6 +227,7 @@ void apagaUC(UC * ucs){
     }
 }
 
+//Liberta Memoria das atividade
 void apagaAtividade(AtividadeUC * atividade){
     if(atividade != NULL){
         free(atividade->nome);
@@ -242,6 +237,7 @@ void apagaAtividade(AtividadeUC * atividade){
     }
 }
 
+//Liberta a memoria total
 void libertarMemoria(Dados * dados){
     eliminarUCs(dados->ucs);
     eliminarAtividades(dados->atividades);
@@ -277,7 +273,6 @@ AtividadeUC * criaAtividade(char * linha){
         exit(1);
     }
     char * parte;
-    
     parte = strtok(linha,"-");
     atividade->idUC = atoi(parte);
     for(int i=0; i<4; i++){
@@ -339,88 +334,11 @@ Dados  * lerFicheiro(char * ficheiro){
     return informacao;
 }
 
-
-/* //Preenche os campos da atividade
-void preencheAtividade(char * str, AtividadeUC * atividade){
-    char * parte;
-    for(int i=0; i<4; i++){
-        parte = strtok(NULL, "-");
-        switch (i){
-            case 0:
-                atividade->inicio = atoi(parte);
-                break;
-            case 1:
-                atividade->fim = atoi(parte);
-                break;
-            case 2:
-                atividade->realizado = atoi(parte);
-                break;
-            case 3:
-                atividade->numSessao = atoi(parte);
-                break;
-        }
-    }
-    parte = strtok(NULL, "-");
-    removerEspacos(parte);
-    strcpy(atividade->nome, parte);
+//Imprimir UC
+void imprimeUC(UC * ucs){
+    printf("%d - %s\n", ucs->numero, ucs->nome);
 }
 
-//Criar Atividades
-AtividadeUC * criaAtividade(char * linha, NodeUC * lista){
-    AtividadeUC * atividade = malloc(sizeof(AtividadeUC));
-    iniciaAtividade(atividade);
-    atividade->nome = malloc(STR * sizeof(char));
-    UC * ucs = NULL;
-    if(!atividade || !atividade->nome){
-        printf("Erro: Não foi possivel alocar memoria para a atividade");
-        exit(1);
-    }
-    char * ucID;
-    char * dados = strchr(linha, '-')+1;
-    ucID = strtok(linha,"-");
-    ucs = procuraUC(lista, atoi(ucID));
-    if(ucs==NULL){
-        printf("Erro: Não foi possivel encontrar UC com o id %d", atoi(ucID));
-        exit(1);
-    }
-    preencheAtividade(dados, atividade);
-    ucs->atividades = adicionarAtividade(ucs->atividades, criarAtividadeNode(atividade));
-
-
-
-    printf("%d", ucs->atividades->atual->fim);
-    return atividade;
-} */
-
-/* //Ler Ficheiro de Configurações
-NodeUC  * lerFicheiro(char * ficheiro){
-    NodeUC  * listaUnidades =NULL;
-    FILE * f;
-    int linhaVazia=0;
-    f = fopen(ficheiro, "r");
-    if(!f){
-        printf("Erro: Não foi possivel abrir o ficheiro!");
-        exit(1);
-    }
-    char linha[STR];
-    while(fgets(linha,STR,f)!=NULL){
-        if(!strcmp(linha,"\n"))
-            linhaVazia++;
-        else {
-            if(linhaVazia==0){
-                listaUnidades = adicionarNode(listaUnidades, criarNodeUC(criaUC(linha)));
-            } else if(linhaVazia==1){
-                //criaAtividade(linha,listaUnidades);
-            } else{
-                printf("r");
-            } 
-        }
-    }
-    fclose(f);
-    return listaUnidades;
-}
-
- */
 //Imprimir Lista 
 void imprimirLista(NodeUC * uc){
     if(uc != NULL){
@@ -431,6 +349,9 @@ void imprimirLista(NodeUC * uc){
     }
 }
 
+void imprime(Dados * dados){
+
+}
 
 /************************
  *  Código Alinea A     *
@@ -449,6 +370,7 @@ int contaCaracteres(NodeUC * lista){
 /************************
  *  Código Alinea B    *
  * *********************/
+
 
 
 
