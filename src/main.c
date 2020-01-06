@@ -31,8 +31,8 @@ typedef struct{
     int inicio;
     int fim;
     int realizado;
-    int num_sessao;
-    char * nomeAtividade;
+    int numSessao;
+    char * nome;
 } AtividadeUC;
 
 //Estrutura Lista de Atividades
@@ -59,6 +59,7 @@ typedef struct node{
  * Headers  *
  * *********/
 void apagaUC(UC * ucs);
+void apagaAtividade(AtividadeUC * atividade);
 
 
 /************************
@@ -78,7 +79,20 @@ NodeUC * adicionarNode(NodeUC * lista, NodeUC * novo){
     return lista;
 }
 
-//Cria Nó do elemento a adicionar na lista
+//Adicionar Elemento no fim da lista
+NodeAtividade * adicionarAtividade(NodeAtividade * lista, NodeAtividade * novo){
+    if(lista==NULL){
+        return novo;
+    }
+    if(lista->proxima==NULL){
+        lista->proxima = novo;
+        return lista;
+    }
+    adicionarAtividade(lista->proxima, novo);
+    return lista;
+}
+
+//Cria Nó do elemento UC a adicionar na lista
 NodeUC * criarNodeUC(UC * unidade){
     NodeUC * novo = malloc(sizeof(NodeUC));
     if(!novo){
@@ -90,7 +104,19 @@ NodeUC * criarNodeUC(UC * unidade){
     return novo;
 }
 
-//Apagar Lista (Libertar Memoria)
+//Criar Nó do elemento Atividade
+NodeAtividade * criarAtividadeNode(AtividadeUC * atividade){
+    NodeAtividade * novo = malloc(sizeof(NodeAtividade));
+    if(!novo){
+        printf("Erro: Não foi possivel alocar memoria para o elemento da lista");
+        exit(1);
+    }
+    novo->atual = atividade;
+    novo->proxima = NULL;
+    return novo;
+}
+
+//Apagar Lista UC (Libertar Memoria)
 void eliminarUCs(NodeUC * lista){
     if(lista!= NULL){
         if(lista->proxima!= NULL){
@@ -103,7 +129,33 @@ void eliminarUCs(NodeUC * lista){
     }
 }
 
+//Apagar Lista Atividades (Libertar Memoria)
+void eliminarAtividades(NodeAtividade * lista){
+    if(lista!= NULL){
+        if(lista->proxima!= NULL){
+            eliminarAtividades(lista->proxima);
+        }
+        apagaAtividade(lista->atual);
+        lista->atual=NULL;
+        free(lista);
+        lista = NULL;
+    }
+}
 
+//Procurar UC
+UC * procuraUC(NodeUC * lista, int id){
+    if(lista==NULL){
+        return NULL;
+    }
+    if(lista->atual!=NULL){
+        if(lista->atual->numero == id){
+            return lista->atual;
+        } else{
+            procuraUC(lista->proxima, id);
+        }
+    }
+    return NULL;
+}
 
 
 /************************
@@ -144,8 +196,8 @@ void removerEspacos(char * palavra){
 UC * criaUC(char * linha){  
     UC * unidadeCurricular = malloc(sizeof(UC));
     unidadeCurricular->nome= malloc(STR * sizeof(char));
-    if(!unidadeCurricular){
-        printf("Erro: Não foi possivel alcar memoria para a unidade curricular");
+    if(!unidadeCurricular || !unidadeCurricular->nome){
+        printf("Erro: Não foi possivel alocar memoria para a unidade curricular");
         exit(1);
     }
     char * parte;
@@ -161,11 +213,73 @@ UC * criaUC(char * linha){
 void apagaUC(UC * ucs){
     if(ucs != NULL){
         free(ucs->nome);
+        eliminarAtividades(ucs->atividades);
         free(ucs);
         ucs = NULL;
     }
 }
 
+void apagaAtividade(AtividadeUC * atividade){
+    if(atividade != NULL){
+        free(atividade->nome);
+        free(atividade);
+        atividade=NULL;
+    }
+}
+
+
+//Preenche os campos da atividade
+void preencheAtividade(char * str, AtividadeUC * atividade){
+    char * parte;
+    for(int i=0; i<4; i++){
+        parte = strtok(NULL, "-");
+        switch (i){
+            case 0:
+                atividade->inicio = atoi(parte);
+                break;
+            case 1:
+                atividade->fim = atoi(parte);
+                break;
+            case 2:
+                atividade->realizado = atoi(parte);
+                break;
+            case 3:
+                atividade->numSessao = atoi(parte);
+                break;
+        }
+    }
+    parte = strtok(NULL, "-");
+    removerEspacos(parte);
+    strcpy(atividade->nome, parte);
+}
+
+//Criar Atividades
+AtividadeUC * criaAtividade(char * linha, NodeUC * lista){
+    AtividadeUC * atividade = malloc(sizeof(AtividadeUC));
+    atividade->nome = malloc(STR * sizeof(char));
+    UC * ucs = NULL;
+    if(!atividade || !atividade->nome){
+        printf("Erro: Não foi possivel alocar memoria para a atividade");
+        exit(1);
+    }
+    char * ucID;
+    char * dados = strchr(linha, '-')+1;
+    ucID = strtok(linha,"-");
+    ucs = procuraUC(lista, atoi(ucID));
+    if(ucs==NULL){
+        printf("Erro: Não foi possivel encontrar UC com o id %d", atoi(ucID));
+        exit(1);
+    }
+    preencheAtividade(dados, atividade);
+    ucs->atividades = adicionarAtividade(ucs->atividades, criarAtividadeNode(atividade));
+
+
+
+    printf("%d", ucs->atividades->atual->fim);
+    return atividade;
+}
+
+//Ler Ficheiro de Configurações
 NodeUC  * lerFicheiro(char * ficheiro){
     NodeUC  * listaUnidades =NULL;
     FILE * f;
@@ -183,11 +297,10 @@ NodeUC  * lerFicheiro(char * ficheiro){
             if(linhaVazia==0){
                 listaUnidades = adicionarNode(listaUnidades, criarNodeUC(criaUC(linha)));
             } else if(linhaVazia==1){
-                printf("d");
+                criaAtividade(linha,listaUnidades);
             } else{
                 printf("r");
-            }
-            
+            } 
         }
     }
     fclose(f);
@@ -203,7 +316,6 @@ void imprimirLista(NodeUC * uc){
         }
     }
 }
-
 
 
 /************************
