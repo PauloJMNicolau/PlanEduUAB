@@ -196,6 +196,7 @@ void removerEspacos(char * palavra){
 UC * criaUC(char * linha){  
     UC * unidadeCurricular = malloc(sizeof(UC));
     unidadeCurricular->nome= malloc(STR * sizeof(char));
+    unidadeCurricular->atividades=malloc(sizeof(NodeAtividade));
     if(!unidadeCurricular || !unidadeCurricular->nome){
         printf("Erro: Não foi possivel alocar memoria para a unidade curricular");
         exit(1);
@@ -222,6 +223,7 @@ void apagaUC(UC * ucs){
 void apagaAtividade(AtividadeUC * atividade){
     if(atividade != NULL){
         free(atividade->nome);
+        atividade->nome=NULL;
         free(atividade);
         atividade=NULL;
     }
@@ -248,7 +250,7 @@ void preencheAtividade(char * str, AtividadeUC * atividade){
                 break;
         }
     }
-    parte = strtok(NULL, "-");
+    parte = strtok(NULL, "\n");
     removerEspacos(parte);
     strcpy(atividade->nome, parte);
 }
@@ -272,10 +274,6 @@ AtividadeUC * criaAtividade(char * linha, NodeUC * lista){
     }
     preencheAtividade(dados, atividade);
     ucs->atividades = adicionarAtividade(ucs->atividades, criarAtividadeNode(atividade));
-
-
-
-    printf("%d", ucs->atividades->atual->fim);
     return atividade;
 }
 
@@ -346,6 +344,7 @@ int main() {
     NodeUC  * listaUnidades=NULL;
     listaUnidades=lerFicheiro("uc.txt");
     printf("%d ",contaCaracteres(listaUnidades));
+    imprimirLista(listaUnidades);
     eliminarUCs(listaUnidades);
     
     listaUnidades=NULL;
