@@ -194,11 +194,9 @@ UC * procuraUC(NodeUC * lista, int id){
     if(lista->atual!=NULL){
         if(lista->atual->numero == id){
             return lista->atual;
-        } else{
-            procuraUC(lista->proxima, id);
         }
     }
-    return NULL;
+    return procuraUC(lista->proxima, id);
 }
 
 
@@ -334,15 +332,14 @@ Dados  * lerFicheiro(char * ficheiro){
                 informacao->ucs = adicionarNode(informacao->ucs, criarNodeUC(criaUC(linha)));
             } else if(linhaVazia==1){
                 AtividadeUC * atividade = criaAtividade(linha);
-                UC * uc = NULL;
-                if((uc=procuraUC(informacao->ucs, atividade->idUC))!= NULL){
+                UC * uc = procuraUC(informacao->ucs, atividade->idUC);
+                if(uc!= NULL){
                     uc->atividades = adicionarAtividade(uc->atividades,criarAtividadeNode(atividade));
                 } else{
                     informacao->atividades= adicionarAtividade(informacao->atividades,criarAtividadeNode(atividade));
                 }
-                //criaAtividade(linha,listaUnidades);
             } else{
-                printf("r");
+                
             } 
         }
     }
