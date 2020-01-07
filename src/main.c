@@ -64,7 +64,12 @@ typedef struct{
  * *********/
 void apagaUC(UC * ucs);
 void apagaAtividade(AtividadeUC * atividade);
-
+int contaAtividadesUCsRealizada(NodeUC * ucs);
+int contaAtividadesUCsRealizada(NodeUC * ucs);
+int contarAtividadesRealizadasUC(Dados * dados);
+int contaAtividadesUCs(NodeUC * ucs);
+int contaTotalAtividades(Dados * dados);
+int contaCaracteres(NodeUC * lista);
 
 /************************
  * Metodos Estruturas   *
@@ -91,6 +96,18 @@ void iniciaAtividade(AtividadeUC * atividade){
 void iniciaDados(Dados * dados){
     dados->ucs = NULL;
     dados->atividades=NULL;
+}
+
+//Tamanho da lista de Atividades
+int tamanhoAtividades(NodeAtividade * atividades){
+    int contador = 0;
+    while(atividades!=NULL){
+        if(atividades->atual != NULL){
+            contador++;
+        }
+        atividades = atividades->proxima;
+    }
+    return contador;
 }
 
 //Adicionar Elemento no fim da lista
@@ -142,7 +159,6 @@ NodeAtividade * criarAtividadeNode(AtividadeUC * atividade){
     novo->proxima = NULL;
     return novo;
 }
-
 
 //Apagar Lista UC (Libertar Memoria)
 void eliminarUCs(NodeUC * lista){
@@ -350,7 +366,8 @@ void imprimirLista(NodeUC * uc){
 }
 
 void imprime(Dados * dados){
-
+    printf("%d %d %d %d", contaCaracteres(dados->ucs), contaTotalAtividades(dados)
+        , contaAtividadesUCs(dados->ucs), contaAtividadesUCsRealizada(dados->ucs));
 }
 
 /************************
@@ -371,6 +388,55 @@ int contaCaracteres(NodeUC * lista){
  *  Código Alinea B    *
  * *********************/
 
+//Contar Atividades Realizadas por UC
+int atividadesUCRealizadas(UC * unidade){
+    int contador=0;
+    NodeAtividade * atividade= NULL;
+    if(unidade!=NULL){
+        atividade = unidade->atividades;
+        while(atividade!= NULL){
+            if(atividade->atual->realizado == 1){
+                contador++;
+            }
+            atividade = atividade->proxima;
+        }
+    }
+    return contador;
+}
+
+//Contar Atividades Realizadas em todas UC
+int contaAtividadesUCsRealizada(NodeUC * ucs){
+    int contador = 0;
+    while(ucs!= NULL){
+        contador+= atividadesUCRealizadas(ucs->atual);
+        ucs = ucs->proxima;
+    }
+    return contador;
+}
+
+//Conta Atividades Realizadas das UC
+int contarAtividadesRealizadasUC(Dados * dados){
+    int contador = 0;
+    contador = contaAtividadesUCsRealizada(dados->ucs);
+    return contador;
+}
+
+//Conta Atividades de Todas as Unidades
+int contaAtividadesUCs(NodeUC * ucs){
+    int contador=0;
+    while(ucs!= NULL){
+        contador+= tamanhoAtividades(ucs->atual->atividades);
+        ucs= ucs->proxima;
+    }
+    return contador;
+}
+
+//Conta Total de Atividades
+int contaTotalAtividades(Dados * dados){
+    int contador =0;
+    contador = contaAtividadesUCs(dados->ucs) + tamanhoAtividades(dados->atividades);
+    return contador;
+}
 
 
 
@@ -383,9 +449,7 @@ int main() {
 
     //NodeUC  * listaUnidades=NULL;
     lista=lerFicheiro("uc.txt");
-    printf("%d ",contaCaracteres(lista->ucs));
-    imprimirLista(lista->ucs);
-    
+    imprime(lista);
     
     libertarMemoria(lista);
     lista=NULL;
