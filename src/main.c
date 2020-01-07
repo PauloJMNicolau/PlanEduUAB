@@ -404,9 +404,11 @@ void imprimirLista(NodeUC * uc){
     }
 }
 
+//Imprimir Output
 void imprime(Dados * dados){
-    printf("%d %d %d %d", contaCaracteres(dados->ucs), contaTotalAtividades(dados)
+    printf("%d %d %d %d\n", contaCaracteres(dados->ucs), contaTotalAtividades(dados)
         , contaAtividadesUCs(dados->ucs), contaAtividadesUCsRealizada(dados->ucs));
+    imprimirLista(dados->ucs);
 }
 
 /************************
@@ -486,11 +488,39 @@ int contaTotalAtividades(Dados * dados){
  *  Código Alinea C    *
  * *********************/
 
+//Calcular Sessões realizadas da unidade
+int totalSessoesRealizadas(UC * unidade){
+    int contador =0;
+    NodeAtividade * atividades = unidade->atividades;
+    while(atividades != NULL){
+        if(atividades->atual->realizado == 1){
+            contador += atividades->atual->numSessao;
+        }
+        atividades = atividades->proxima;
+    }
+    return contador;
+}
+
+//Calcular Sessões da Unidade
+int totalSessoes(UC * unidade){
+    int contador =0;
+    NodeAtividade * atividades = unidade->atividades;
+    while(atividades != NULL){
+        contador += atividades->atual->numSessao;
+        atividades = atividades->proxima;
+    }
+    return contador;
+}
+
+
 //Calcula Percentagem Realizada da Unidade
 void calcularConcluido(UC * unidade){
-    int atv = atividadesUCRealizadas(unidade);
-    int real = atividadesUC(unidade);
-    float percentagem = ((float)atv / real)*100;
+    int realizadas = totalSessoesRealizadas(unidade);
+    int total = totalSessoes(unidade);
+    float percentagem =0;
+    if(total != 0){
+        percentagem = ((float)realizadas / total)*100;
+    }
     unidade->concluido = percentagem;
 }
 
@@ -527,13 +557,8 @@ int main() {
 
     //NodeUC  * listaUnidades=NULL;
     lista=lerFicheiro("uc.txt");
-    imprimirLista(lista->ucs);
     ordenarUC(lista->ucs);
-    
-    imprimirLista(lista->ucs);
     imprime(lista);
-    //lista = ordenarPorDisciplina(lista->ucs);
-    //imprime(lista);
     libertarMemoria(lista);
     lista=NULL;
 }
