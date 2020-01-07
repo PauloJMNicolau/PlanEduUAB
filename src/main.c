@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
-
+#include <math.h>
 #include <unistd.h>
 
 /***********************
@@ -45,6 +45,7 @@ typedef struct nodeAct{
 typedef struct{
     int numero;
     char * nome;
+    float concluido;
     NodeAtividade * atividades;
 } UC;
 
@@ -70,6 +71,9 @@ int contarAtividadesRealizadasUC(Dados * dados);
 int contaAtividadesUCs(NodeUC * ucs);
 int contaTotalAtividades(Dados * dados);
 int contaCaracteres(NodeUC * lista);
+void calcularConcluidas(NodeUC * unidades);
+int calcularValor(UC * unidade);
+
 
 /************************
  * Metodos Estruturas   *
@@ -78,6 +82,7 @@ int contaCaracteres(NodeUC * lista);
 //Inicia valores de UC
 void iniciaUC(UC * ucs){
     ucs->numero = 0;
+    ucs->concluido=0;
     ucs->nome = NULL;
     ucs->atividades = NULL;
 }
@@ -98,7 +103,7 @@ void iniciaDados(Dados * dados){
     dados->atividades=NULL;
 }
 
-//Tamanho da lista de Atividades
+//Retorna Tamanho da lista de Atividades
 int tamanhoAtividades(NodeAtividade * atividades){
     int contador = 0;
     while(atividades!=NULL){
@@ -106,6 +111,18 @@ int tamanhoAtividades(NodeAtividade * atividades){
             contador++;
         }
         atividades = atividades->proxima;
+    }
+    return contador;
+}
+
+//Retorna tamanho da Lista de Unidades
+int tamanhoUC(NodeUC * ucs){
+    int contador =0;
+    while(ucs!=NULL){
+        if(ucs->atual != NULL){
+            contador++;
+        }
+        ucs = ucs->proxima;
     }
     return contador;
 }
@@ -121,6 +138,30 @@ NodeUC * adicionarNode(NodeUC * lista, NodeUC * novo){
     }
     adicionarNode(lista->proxima, novo);
     return lista;
+}
+
+void troca(NodeUC * atual, NodeUC * seguinte){
+    UC * temp = atual->atual;
+    atual->atual = seguinte->atual;
+    seguinte->atual = temp;
+}
+
+//Ordena lista Unidades
+void ordenarUC(NodeUC * lista){
+    NodeUC * atual = NULL;
+    for(int i =0; i< tamanhoUC(lista)-1; i++){
+        atual = lista;
+        while(atual!=NULL && atual->proxima !=NULL){
+            if(atual->atual->concluido < atual->proxima->atual->concluido){
+                troca(atual, atual->proxima);
+            } else if(atual->atual->concluido == atual->proxima->atual->concluido){
+                if(atual->atual->numero > atual->proxima->atual->numero){
+                    troca(atual, atual->proxima);
+                }
+            }
+            atual = atual->proxima;
+        }
+    }
 }
 
 //Adicionar Elemento no fim da lista
@@ -344,12 +385,13 @@ Dados  * lerFicheiro(char * ficheiro){
         }
     }
     fclose(f);
+    calcularConcluidas(informacao->ucs); 
     return informacao;
 }
 
 //Imprimir UC
 void imprimeUC(UC * ucs){
-    printf("%d - %s\n", ucs->numero, ucs->nome);
+    printf("%s: UC%d %.1f%% Nota prevista: %d valores\n", ucs->nome, ucs->numero, ucs->concluido, calcularValor(ucs));
 }
 
 //Imprimir Lista 
@@ -418,11 +460,16 @@ int contarAtividadesRealizadasUC(Dados * dados){
     return contador;
 }
 
+//Conta atividades de uma Unidade
+int atividadesUC(UC * uc){
+    return tamanhoAtividades(uc->atividades);
+}
+
 //Conta Atividades de Todas as Unidades
 int contaAtividadesUCs(NodeUC * ucs){
     int contador=0;
     while(ucs!= NULL){
-        contador+= tamanhoAtividades(ucs->atual->atividades);
+        contador+= atividadesUC(ucs->atual);
         ucs= ucs->proxima;
     }
     return contador;
@@ -435,6 +482,40 @@ int contaTotalAtividades(Dados * dados){
     return contador;
 }
 
+/************************
+ *  Código Alinea C    *
+ * *********************/
+
+//Calcula Percentagem Realizada da Unidade
+void calcularConcluido(UC * unidade){
+    int atv = atividadesUCRealizadas(unidade);
+    int real = atividadesUC(unidade);
+    float percentagem = ((float)atv / real)*100;
+    unidade->concluido = percentagem;
+}
+
+//Calcula Percentagens realizadas de todas as unidades
+void calcularConcluidas(NodeUC * unidades){
+    while(unidades!=NULL){
+        calcularConcluido(unidades->atual);
+        unidades = unidades->proxima;
+    }
+}
+
+//Calcula Valor obtido
+int calcularValor(UC * unidade){
+    int valor=0;
+    if(unidade->concluido ==100){
+        valor = 20;
+    } else if( unidade->concluido==0){
+        valor = 0;
+    } else if(unidade->concluido ==25){
+        valor = 10;
+    } else{
+        valor = round((((unidade->concluido - 25)/75)*10)+10);
+    }
+    return valor;
+}
 
 
 /************************
@@ -446,8 +527,13 @@ int main() {
 
     //NodeUC  * listaUnidades=NULL;
     lista=lerFicheiro("uc.txt");
-    imprime(lista);
+    imprimirLista(lista->ucs);
+    ordenarUC(lista->ucs);
     
+    imprimirLista(lista->ucs);
+    imprime(lista);
+    //lista = ordenarPorDisciplina(lista->ucs);
+    //imprime(lista);
     libertarMemoria(lista);
     lista=NULL;
 }
