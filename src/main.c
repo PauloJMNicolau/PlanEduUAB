@@ -33,6 +33,7 @@ typedef struct{
     int realizado;
     int numSessao;
     char * nome;
+    char * sessoes;
 } AtividadeUC;
 
 //Estrutura Lista de Atividades
@@ -58,7 +59,15 @@ typedef struct node{
 typedef struct{
     NodeUC * ucs;
     NodeAtividade * atividades;
+    int K;
 } Dados;
+
+typedef struct{
+    AtividadeUC * atividade1;
+    int sessoesFaltaAtv1;
+    AtividadeUC * atividade2;
+    int sessoesFaltaAtv2;
+} Sessao;
 
 /************
  * Headers  *
@@ -79,6 +88,14 @@ int calcularValor(UC * unidade);
  * Metodos Estruturas   *
  ***********************/
 
+//Iniciar Sessoes
+void iniciaSessao(Sessao * sessao){
+    sessao->atividade1 = NULL;
+    sessao->atividade2 = NULL;
+    sessao->sessoesFaltaAtv1 = 0;
+    sessao->sessoesFaltaAtv2 = 0;
+}
+
 //Inicia valores de UC
 void iniciaUC(UC * ucs){
     ucs->numero = 0;
@@ -95,12 +112,14 @@ void iniciaAtividade(AtividadeUC * atividade){
     atividade->realizado=0;
     atividade->numSessao=0;
     atividade->nome=NULL;
+    atividade->sessoes=NULL;
 }
 
 //Inicia valores de Dados
 void iniciaDados(Dados * dados){
     dados->ucs = NULL;
     dados->atividades=NULL;
+    dados->K = 0;
 }
 
 //Retorna Tamanho da lista de Atividades
@@ -140,6 +159,7 @@ NodeUC * adicionarNode(NodeUC * lista, NodeUC * novo){
     return lista;
 }
 
+//Trocar Elementos da lista de UC
 void troca(NodeUC * atual, NodeUC * seguinte){
     UC * temp = atual->atual;
     atual->atual = seguinte->atual;
@@ -270,6 +290,13 @@ void removerEspacos(char * palavra){
     
 }
 
+//Libertar Sessao
+void apagarSessao(Sessao * sessao){
+    iniciaSessao(sessao);
+    free(sessao);
+    sessao = NULL;
+}
+
 //Liberta Memoria das Unidades Curriculares
 void apagaUC(UC * ucs){
     if(ucs != NULL){
@@ -323,7 +350,8 @@ AtividadeUC * criaAtividade(char * linha){
     AtividadeUC * atividade = malloc(sizeof(AtividadeUC));
     iniciaAtividade(atividade);
     atividade->nome = malloc(STR * sizeof(char));
-    if(!atividade || !atividade->nome){
+    atividade->sessoes = malloc(STR * sizeof(char));
+    if(!atividade || !atividade->nome || !atividade->sessoes){
         printf("Erro: Não foi possivel alocar memoria para a atividade");
         exit(1);
     }
@@ -353,6 +381,17 @@ AtividadeUC * criaAtividade(char * linha){
     return atividade;
 }
 
+//Cria Sessão
+Sessao * criarSessao(){
+    Sessao * sessao= malloc(sizeof(Sessao));
+    if(!sessao){
+        printf("Erro: Não foi possivel alocar memória para a sessao");
+        exit(1);
+    }
+    iniciaSessao(sessao);
+    return sessao;
+}
+
 //Ler Ficheiro de Configurações
 Dados  * lerFicheiro(char * ficheiro){
     Dados  * informacao=malloc(sizeof(Dados));
@@ -380,7 +419,7 @@ Dados  * lerFicheiro(char * ficheiro){
                     informacao->atividades= adicionarAtividade(informacao->atividades,criarAtividadeNode(atividade));
                 }
             } else{
-                
+                informacao->K = atoi(linha);
             } 
         }
     }
@@ -389,9 +428,19 @@ Dados  * lerFicheiro(char * ficheiro){
     return informacao;
 }
 
+void imprimirAtividades(NodeAtividade * atividades){
+    while(atividades != NULL){
+        if(strcmp(atividades->atual->sessoes," ")){
+            printf("  %s, sessoes:%s\n", atividades->atual->nome, atividades->atual->sessoes);
+        }
+        atividades= atividades->proxima;
+    }
+}
+
 //Imprimir UC
 void imprimeUC(UC * ucs){
     printf("%s: UC%d %.1f%% Nota prevista: %d valores\n", ucs->nome, ucs->numero, ucs->concluido, calcularValor(ucs));
+    imprimirAtividades(ucs->atividades);
 }
 
 //Imprimir Lista 
@@ -425,7 +474,7 @@ int contaCaracteres(NodeUC * lista){
     return contar;
 }
 
-/************************
+/***********************
  *  Código Alinea B    *
  * *********************/
 
@@ -484,7 +533,7 @@ int contaTotalAtividades(Dados * dados){
     return contador;
 }
 
-/************************
+/***********************
  *  Código Alinea C    *
  * *********************/
 
@@ -548,6 +597,172 @@ int calcularValor(UC * unidade){
 }
 
 
+/***********************
+ *  Código Alinea D    *
+ * *********************/
+
+//Retorna o limite maximo das Sessões
+int getMaxSessao(int K, NodeUC * ucs){
+    int maximo = 0;
+    NodeUC * auxUC = NULL;
+    NodeAtividade * auxATV = NULL;
+    if(K!=0 && ucs != NULL){
+        auxUC = ucs;
+        for(int i=0; i<=K; i++){
+            auxATV = auxUC->proxima->atual->atividades;
+            while(auxATV!=NULL){
+                if(auxATV->atual->realizado==0){
+                    if(auxATV->atual->fim > maximo){
+                        maximo = auxATV->atual->fim;
+                    }
+                }
+                auxATV= auxATV->proxima;
+            }
+            auxUC = auxUC->proxima;
+        }
+    }
+    return maximo;
+}
+
+
+//Retorna a UC na posição K;
+UC * getPiorUC(NodeUC * ucs, int K){
+    NodeUC * aux = NULL;
+    UC * auxUC = NULL;
+    aux = ucs;
+    for(int i = 0; i<K; i++){
+        if(aux!=NULL){
+            auxUC = aux->atual;
+        }
+        aux = aux->proxima;
+    }
+    return auxUC;
+}
+
+//Retorna 1 se for possivel realizar ou 0 se não for possivel realizar a atividade
+int possivelRealizar(AtividadeUC * atividade){
+   if((atividade->fim - atividade->inicio)>= atividade->numSessao){
+       return 1;
+   } 
+   return 0;
+}
+
+//Retorna a atividade com menor duraçao;
+AtividadeUC * getMenorAtividade(UC * unidade, int inicio){
+    NodeAtividade * aux = unidade->atividades;
+    AtividadeUC * menor = aux->atual;
+    while(possivelRealizar(menor)!=1 && menor->realizado!=0 && inicio+menor->numSessao<=menor->fim){
+        aux = aux->proxima;
+        menor = aux->atual;
+    }
+    while(aux!=NULL){
+        aux= aux->proxima;
+        if(aux!= NULL && aux->atual->realizado==0){
+            if(possivelRealizar(aux->atual) && inicio+aux->atual->numSessao<=aux->atual->fim){
+                if(aux->atual->numSessao < menor->numSessao){
+                    menor = aux->atual;
+                }
+            }
+        }
+    }
+    if(possivelRealizar(menor)!=1 && menor->realizado!=0 && inicio+menor->numSessao<=menor->fim){
+        return NULL;
+    }
+    return menor;
+}
+
+//Realiza Atividades na sessão
+void realizaAtividadesSessao(Sessao * sessao, int idSessao){
+    char id[3];
+    sprintf(id,"%d", idSessao);
+    AtividadeUC * atividade = sessao->atividade1;
+    if(possivelRealizar(atividade)){
+        strcat(atividade->sessoes,id);
+        sessao->sessoesFaltaAtv1--;
+        if(sessao->sessoesFaltaAtv1==0){
+            atividade->realizado=1;
+            sessao->atividade1 = NULL;
+        }
+    }
+    atividade = sessao->atividade2;
+    if(possivelRealizar(atividade)){
+        strcat(atividade->sessoes,id);
+        sessao->sessoesFaltaAtv2--;
+        if(sessao->sessoesFaltaAtv2==0){
+            atividade->realizado=1;
+            sessao->atividade2 = NULL;
+        }
+    }
+    if(sessao->atividade1==NULL){
+        sessao->atividade1= sessao->atividade2;
+        sessao->sessoesFaltaAtv1=sessao->sessoesFaltaAtv2;
+        sessao->atividade2=NULL;
+        sessao->sessoesFaltaAtv2=0;
+    }
+}
+
+void realizaAtividade(Sessao * sessao, int idSessao){
+    char id[3];
+    sprintf(id,"%d", idSessao);
+    AtividadeUC * atividade = sessao->atividade1;
+    if(possivelRealizar(atividade)){
+        strcat(atividade->sessoes,id);
+        sessao->sessoesFaltaAtv1--;
+        if(sessao->sessoesFaltaAtv1==0){
+            atividade->realizado=1;
+            sessao->atividade1 = NULL;
+        }
+    }
+}
+
+void realiza(Dados * dados, int inicio, Sessao* sessao){
+    NodeUC * unidades = dados->ucs;
+    char id[3];
+    sprintf(id," %d", inicio);
+    int K = dados->K;
+    UC * unidade = NULL;
+    AtividadeUC * atividade = NULL;
+    while(K!=0 || atividade== NULL){
+        unidade = getPiorUC(unidades, K);
+        atividade = getMenorAtividade(unidade, inicio);
+        K--;
+    }
+    if(atividade!=NULL){
+        strcat(atividade->sessoes,id);
+        int falta = atividade->numSessao-1;
+        if(falta !=0){
+            if(sessao->atividade1==NULL){
+                sessao->atividade1= atividade;
+                sessao->sessoesFaltaAtv1= falta;
+            } else if(sessao->atividade2==NULL){
+                sessao->atividade2= atividade;
+                sessao->sessoesFaltaAtv2= falta;
+            }
+        } else{
+            atividade->realizado=1;
+        }
+    }
+}
+
+
+//Realizar Sessoes
+void realizarSessoes(Dados * dados){
+    Sessao * sessao = criarSessao();
+    for(int i = 0; i<getMaxSessao(dados->K,dados->ucs); i++){
+        if(sessao->atividade1 != NULL && sessao->atividade2 != NULL){
+            realizaAtividadesSessao(sessao, i);
+        } else if(sessao->atividade1 != NULL && sessao->atividade2 == NULL){
+            realizaAtividade(sessao,i);
+            realiza(dados,i,sessao);
+        } else{
+            realiza(dados,i,sessao);
+            realiza(dados,i,sessao);
+        }
+    }
+    apagarSessao(sessao);
+}
+
+
 /************************
  *  Função Principal    *
  * *********************/
@@ -558,6 +773,7 @@ int main() {
     //NodeUC  * listaUnidades=NULL;
     lista=lerFicheiro("uc.txt");
     ordenarUC(lista->ucs);
+    realizarSessoes(lista);
     imprime(lista);
     libertarMemoria(lista);
     lista=NULL;
