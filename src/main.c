@@ -378,6 +378,7 @@ AtividadeUC * criaAtividade(char * linha){
     parte = strtok(NULL, "\n");
     removerEspacos(parte);
     strcpy(atividade->nome, parte);
+    strcpy(atividade->sessoes, " ");
     return atividade;
 }
 
@@ -674,7 +675,7 @@ AtividadeUC * getMenorAtividade(UC * unidade, int inicio){
 //Realiza Atividades na sessão
 void realizaAtividadesSessao(Sessao * sessao, int idSessao){
     char id[3];
-    sprintf(id,"%d", idSessao);
+    sprintf(id,"%d ", idSessao);
     AtividadeUC * atividade = sessao->atividade1;
     if(possivelRealizar(atividade)){
         strcat(atividade->sessoes,id);
@@ -703,7 +704,7 @@ void realizaAtividadesSessao(Sessao * sessao, int idSessao){
 
 void realizaAtividade(Sessao * sessao, int idSessao){
     char id[3];
-    sprintf(id,"%d", idSessao);
+    sprintf(id,"%d ", idSessao);
     AtividadeUC * atividade = sessao->atividade1;
     if(possivelRealizar(atividade)){
         strcat(atividade->sessoes,id);
@@ -718,7 +719,7 @@ void realizaAtividade(Sessao * sessao, int idSessao){
 void realiza(Dados * dados, int inicio, Sessao* sessao){
     NodeUC * unidades = dados->ucs;
     char id[3];
-    sprintf(id," %d", inicio);
+    sprintf(id,"%d ", inicio);
     int K = dados->K;
     UC * unidade = NULL;
     AtividadeUC * atividade = NULL;
