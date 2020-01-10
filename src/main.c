@@ -293,7 +293,7 @@ void removerEspacos(char * palavra){
 
 //Libertar Sessao
 void apagarSessao(Sessao * sessao){
-    iniciaSessao(sessao);
+    //iniciaSessao(sessao);
     free(sessao);
     sessao = NULL;
 }
@@ -315,6 +315,8 @@ void apagaAtividade(AtividadeUC * atividade){
     if(atividade != NULL){
         free(atividade->nome);
         atividade->nome=NULL;
+        free(atividade->sessoes);
+        atividade->sessoes=NULL;
         free(atividade);
         atividade=NULL;
     }
@@ -390,6 +392,8 @@ Sessao * criarSessao(){
         printf("Erro: Não foi possivel alocar memória para a sessao");
         exit(1);
     }
+
+    
     iniciaSessao(sessao);
     return sessao;
 }
@@ -712,7 +716,7 @@ AtividadeUC * getAtividadeSessao(AtividadeUC * atv, NodeUC * ucs, int sessao, in
 //Realizar Sessoes
 void realizarSessoes(Dados * dados){
     NodeUC * ucs = dados->ucs;
-    //Sessao * sessao = criarSessao();
+    Sessao * sessao = criarSessao();
     int index =0;
     for(int i = 0; i<getMaxSessao(dados->K,dados->ucs); i++){
         /* if(sessao->atividade1 != NULL && sessao->atividade2 != NULL){
@@ -738,7 +742,8 @@ void realizarSessoes(Dados * dados){
         } */
         imprime(dados);
     }
-    //apagarSessao(sessao);
+    apagarSessao(sessao);
+    sessao=NULL;
 }
 
 
