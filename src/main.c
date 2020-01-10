@@ -393,9 +393,11 @@ UC * criaUC(char * linha){
 }
 
 //Cria Atividades
-AtividadeUC * criaAtividade(char * linha){
+AtividadeUC * criaAtividade(char * palavra){
+    char * linha = palavra;
+    //strcpy(linha,palavra);
     AtividadeUC * atividade = malloc(sizeof(AtividadeUC));
-    char * aux;
+    char * aux = " ";
     iniciaAtividade(atividade);
     atividade->nome = malloc(STR * sizeof(char));
     atividade->sessoes = malloc(STR * sizeof(char));
@@ -403,7 +405,7 @@ AtividadeUC * criaAtividade(char * linha){
         printf("Erro: Não foi possivel alocar memoria para a atividade");
         exit(1);
     }
-    char * parte;
+    char * parte = " ";
     parte = strtok(linha,"-");
     atividade->idUC = atoi(parte);
     for(int i=0; i<4; i++){
@@ -426,7 +428,6 @@ AtividadeUC * criaAtividade(char * linha){
     parte = strtok(NULL, "\n");
     removerEspacos(parte);
     strncpy(atividade->nome, parte,2);
-    
     aux=strrchr(parte,'F')+1;
     atividade->numero = atoi(aux);
     strcpy(atividade->sessoes, " ");
@@ -458,7 +459,7 @@ Dados  * lerFicheiro(char * ficheiro){
         printf("Erro: Não foi possivel abrir o ficheiro!");
         exit(1);
     }
-    char linha[STR];
+    char linha[STR] = " ";
     while(fgets(linha,STR,f)!=NULL){
         if(!strcmp(linha,"\n"))
             linhaVazia++;
@@ -479,40 +480,62 @@ Dados  * lerFicheiro(char * ficheiro){
         }
     }
     fclose(f);
-    calcularConcluidas(informacao->ucs); 
+    calcularConcluidas(informacao->ucs);
+    imprimeOutput(informacao); 
     return informacao;
 }
 
 void imprimirAtividades(NodeAtividade * atividades){
-    while(atividades != NULL){
-        //if(strcmp(atividades->atual->sessoes," ")){
-            printf("  %s%d, %d %d sessoes:%s\n", atividades->atual->nome, atividades->atual->numero, atividades->atual->inicio, atividades->atual->numSessao,atividades->atual->sessoes);
-        //}
-        atividades= atividades->proxima;
+    if(atividades != NULL){
+        NodeAtividade* aux = atividades;
+        char * texto;
+        while(aux != NULL){
+            texto = aux->atual->sessoes;
+            if(strcmp(texto," ")){
+                printf("  %s%d, sessoes:%s\n", aux->atual->nome, aux->atual->numero,texto);
+            }
+            aux= aux->proxima;
+        }
     }
 }
 
 //Imprimir UC
 void imprimeUC(UC * ucs){
-    printf("%s: UC%d %.1f%% Nota prevista: %d valores\n", ucs->nome, ucs->numero, ucs->concluido, calcularValor(ucs));
-    imprimirAtividades(ucs->atividades);
+    if(ucs!= NULL){
+        UC* aux = ucs;
+        if(aux!=NULL){
+            printf("%s: UC%d %.1f%% Nota prevista: %d valores\n", aux->nome, aux->numero, aux->concluido, calcularValor(aux));
+            imprimirAtividades(aux->atividades);
+        }
+    }
 }
 
 //Imprimir Lista 
 void imprimirLista(NodeUC * uc){
-    if(uc != NULL){
-        imprimeUC(uc->atual);
-        if(uc->proxima != NULL){
-            imprimirLista(uc->proxima);
+    if(uc!=NULL){
+        NodeUC * aux = uc;
+        if(aux != NULL){
+            imprimeUC(aux->atual);
+            if(aux->proxima != NULL){
+                imprimirLista(aux->proxima);
+            }
         }
     }
 }
 
 //Imprimir Output
-void imprime(Dados * dados){
+
+void imprimeOutput(Dados* dados){
     printf("%d %d %d %d\n", contaCaracteres(dados->ucs), contaTotalAtividades(dados)
-        , contaAtividadesUCs(dados->ucs), contaAtividadesUCsRealizada(dados->ucs));
-    imprimirLista(dados->ucs);
+            , contaAtividadesUCs(dados->ucs), contaAtividadesUCsRealizada(dados->ucs));
+}
+
+void imprime(Dados * dados){
+    if(dados != NULL){
+        
+        imprimirLista(dados->ucs);
+    }
+    
 }
 
 /************************
@@ -732,21 +755,27 @@ AtividadeUC * getAtividadeMenor(int sessao, NodeAtividade * atividades, int posi
     return atv;
 }
 
-//Retorna 1 se atividade não existir na sessao
+//Retorna 1 se atividade existir no espaço 1
+//Retorna 2 se atividade existir no espaço 2
 //Retorna 0 caso exista
 int pesquisaSessao(Sessao * sessao, AtividadeUC * ativ){
-    int vazio = 1;
+    int vazio = 0;
     if(sessao!=NULL && ativ!= NULL){
         if(sessao->atividade1 != ativ && sessao->atividade2!= ativ){
             vazio = 0;
+        } else if(sessao->atividade1 == ativ && sessao->atividade2!= ativ){
+            vazio =1;
+        } else if(sessao->atividade1 != ativ && sessao->atividade2== ativ){
+            vazio =2;
         }
     }
     return vazio;
 }
 
-//Retorna 0 se sessao vazia ou Nula
+//Retorna 0 se sessao nao vazia
 //Retorna 1 se existir elemento na atividade 1
 //Retorna 2 se existir elemento na atividade 2
+//Retorna 3 se vazia
 int sessaoVazia(Sessao * sessao){
     if(sessao!=NULL){
         if(sessao->atividade1 != NULL && sessao->atividade2!=NULL){
@@ -756,8 +785,9 @@ int sessaoVazia(Sessao * sessao){
         } else if(sessao->atividade1 == NULL && sessao->atividade2 != NULL){
             return 2;
         }
+        return 3;
     }
-    return 0;
+    return 3;
 }
 
 AtividadeUC*  pesquisaAtividade(Sessao * sessao, int K, NodeUC* ucs, int pos){
@@ -767,7 +797,7 @@ AtividadeUC*  pesquisaAtividade(Sessao * sessao, int K, NodeUC* ucs, int pos){
     int valida=0;
     int posicao=1;
     calcularConcluidas(ucs); 
-    ordenarUC(ucs);
+    //ordenarUC(ucs);
     while(index>0 && atividade ==NULL){
         pior = getPiorUC(ucs,index);
         if(pior!=NULL){
@@ -777,7 +807,7 @@ AtividadeUC*  pesquisaAtividade(Sessao * sessao, int K, NodeUC* ucs, int pos){
                 aux = getAtividadeMenor(pos, pior->atividades,posicao);
                 valida = possivelRealizar(aux) && verificaSessao(pos,aux);
                 if(valida){
-                    if(pesquisaSessao(sessao,aux)){
+                    if(!pesquisaSessao(sessao,aux)){
                         atividade= aux;
                     }
                 }
@@ -790,13 +820,64 @@ AtividadeUC*  pesquisaAtividade(Sessao * sessao, int K, NodeUC* ucs, int pos){
     return atividade;
 }
 
+void removerAtividade(Sessao * sessao){
+    if(sessao!=NULL){
+        if(sessao->atividade1!=NULL){
+            if(sessao->sessoesFaltaAtv1==0){
+                sessao->atividade1->realizado=1;
+                sessao->atividade1=NULL;
+                sessao->sessoesFaltaAtv1=0;
+            }
+        }
+        if(sessao->atividade2!=NULL){
+            if(sessao->sessoesFaltaAtv2==0){
+                sessao->atividade2->realizado=1;
+                sessao->atividade2=NULL;
+                sessao->sessoesFaltaAtv2=0;
+            }
+        }
+    }
+
+}
+
+
 void realizaAtividade(Sessao * sessao, AtividadeUC * ativ, int id){
     char texto[3];
     sprintf(texto,"%d ",id);
+    int falta =  0;
+     
     if(ativ!=NULL){
         strcat(ativ->sessoes, texto);
-        
-
+        falta = ativ->numSessao -1;
+        switch(pesquisaSessao(sessao, ativ)){
+            case 1:
+                sessao->sessoesFaltaAtv1--;
+                break;
+            case 2:
+                sessao->sessoesFaltaAtv2--;
+                break;
+            case 0:
+                if(falta!=0){
+                    switch(sessaoVazia(sessao)){
+                        case 1:
+                            sessao->atividade2 = ativ;
+                            sessao->sessoesFaltaAtv2 = falta;
+                            break;
+                        case 2:
+                            sessao->atividade1 = ativ;
+                            sessao->sessoesFaltaAtv1 = falta;
+                            break;
+                        case  3:
+                            sessao->atividade1 = ativ;
+                            sessao->sessoesFaltaAtv1 = falta;
+                            break;
+                    }
+                } else{
+                    ativ->realizado=1;
+                }
+                break;
+        }
+        removerAtividade(sessao);        
     }
 }
 
@@ -809,19 +890,25 @@ void realizarSessoes(Dados * dados){
     //int index =0, posicao = 1, valida=0;
     for(int i = 0; i<=getMaxSessao(dados->K,dados->ucs); i++){
         switch (sessaoVazia(sessao)){
-        case 1:
-
-            break;
-        case 2:
-
-            break;
-        case 0:
-            for(int exec =0; exec < 2; exec++){
+            case 0:
+                realizaAtividade(sessao, sessao->atividade1, i);
+                realizaAtividade(sessao, sessao->atividade2, i);
+                break;
+            case 1:
+                realizaAtividade(sessao, sessao->atividade1, i);
                 atividade = pesquisaAtividade(sessao, dados->K, ucs, i);
-            }
-            break;
+                break;
+            case 2:
+                realizaAtividade(sessao, sessao->atividade2, i);
+                atividade = pesquisaAtividade(sessao, dados->K, ucs, i);
+                break;
+            case 3:
+                for(int exec =0; exec < 2; exec++){
+                    atividade = pesquisaAtividade(sessao, dados->K, ucs, i);
+                    realizaAtividade(sessao, atividade, i);
+                }
+                break;
         }
-        imprime(dados);
     } 
     apagarSessao(sessao);
     sessao=NULL;
@@ -836,6 +923,7 @@ int main() {
     lista=lerFicheiro("uc.txt");
     ordenarUC(lista->ucs);
     realizarSessoes(lista);
+    ordenarUC(lista->ucs);
     imprime(lista);
     libertarMemoria(lista);
     lista=NULL;
