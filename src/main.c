@@ -83,6 +83,7 @@ int contaTotalAtividades(Dados * dados);
 int contaCaracteres(NodeUC * lista);
 void calcularConcluidas(NodeUC * unidades);
 int calcularValor(UC * unidade);
+void imprimeOutput(Dados* dados);
 
 
 /************************
@@ -797,7 +798,7 @@ AtividadeUC*  pesquisaAtividade(Sessao * sessao, int K, NodeUC* ucs, int pos){
     int valida=0;
     int posicao=1;
     calcularConcluidas(ucs); 
-    //ordenarUC(ucs);
+    ordenarUC(ucs);
     while(index>0 && atividade ==NULL){
         pior = getPiorUC(ucs,index);
         if(pior!=NULL){
@@ -848,7 +849,7 @@ void realizaAtividade(Sessao * sessao, AtividadeUC * ativ, int id){
      
     if(ativ!=NULL){
         strcat(ativ->sessoes, texto);
-        falta = ativ->numSessao -1;
+        falta = ativ->numSessao-1;
         switch(pesquisaSessao(sessao, ativ)){
             case 1:
                 sessao->sessoesFaltaAtv1--;
@@ -884,10 +885,8 @@ void realizaAtividade(Sessao * sessao, AtividadeUC * ativ, int id){
 //Realizar Sessoes
 void realizarSessoes(Dados * dados){
     NodeUC * ucs = dados->ucs;
-    //UC * pior = NULL;
-    AtividadeUC * atividade = NULL; //, * aux=NULL;;
+    AtividadeUC * atividade = NULL;
     Sessao * sessao = criarSessao();
-    //int index =0, posicao = 1, valida=0;
     for(int i = 0; i<=getMaxSessao(dados->K,dados->ucs); i++){
         switch (sessaoVazia(sessao)){
             case 0:
