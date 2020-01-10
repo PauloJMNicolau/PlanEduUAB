@@ -169,7 +169,8 @@ void troca(NodeUC * atual, NodeUC * seguinte){
 //Ordena lista Unidades
 void ordenarUC(NodeUC * lista){
     NodeUC * atual = NULL;
-    for(int i =0; i< tamanhoUC(lista)-1; i++){
+    int limite = tamanhoUC(lista)-1;
+    for(int i =0; i< limite ; i++){
         atual = lista;
         while(atual!=NULL && atual->proxima !=NULL){
             if(atual->atual->concluido < atual->proxima->atual->concluido){
@@ -576,9 +577,10 @@ void calcularConcluido(UC * unidade){
 
 //Calcula Percentagens realizadas de todas as unidades
 void calcularConcluidas(NodeUC * unidades){
-    while(unidades!=NULL){
-        calcularConcluido(unidades->atual);
-        unidades = unidades->proxima;
+    NodeUC * ucs = unidades;
+    while(ucs!=NULL){
+        calcularConcluido(ucs->atual);
+        ucs = ucs->proxima;
     }
 }
 
@@ -625,7 +627,6 @@ int getMaxSessao(int K, NodeUC * ucs){
     return maximo;
 }
 
-
 //Retorna a UC na posição K;
 UC * getPiorUC(NodeUC * ucs, int K){
     NodeUC * aux = NULL;
@@ -640,127 +641,104 @@ UC * getPiorUC(NodeUC * ucs, int K){
     return auxUC;
 }
 
-//Retorna 1 se for possivel realizar ou 0 se não for possivel realizar a atividade
+//Retorna 1 se for possivel realizar
+//Retorna 0 se não for possivel realizar
 int possivelRealizar(AtividadeUC * atividade){
-   if((atividade->fim - atividade->inicio)>= atividade->numSessao){
-       return 1;
-   } 
-   return 0;
+    int tamanho = atividade->fim - atividade->inicio;
+    if(tamanho >= atividade->numSessao && atividade->realizado ==0){
+        return 1;
+    }
+    return 0;
 }
 
-//Retorna a atividade com menor duraçao;
-AtividadeUC * getMenorAtividade(UC * unidade, int inicio){
-    NodeAtividade * aux = unidade->atividades;
-    AtividadeUC * menor = aux->atual;
-    while(possivelRealizar(menor)!=1 && menor->realizado!=0 && inicio+menor->numSessao<=menor->fim){
-        aux = aux->proxima;
-        menor = aux->atual;
-    }
-    while(aux!=NULL){
-        aux= aux->proxima;
-        if(aux!= NULL && aux->atual->realizado==0){
-            if(possivelRealizar(aux->atual) && inicio+aux->atual->numSessao<=aux->atual->fim){
-                if(aux->atual->numSessao < menor->numSessao){
-                    menor = aux->atual;
-                }
-            }
+//Retorna 1 se atividade for possivel realizar na sessao
+//Retorna 0 se não for possivel
+int verificaSessao(int sessao, AtividadeUC *atividade){
+    int limite =0;
+    if(atividade!=NULL){
+        limite = atividade->fim - atividade->numSessao;
+        if(sessao >= atividade->inicio && sessao<= limite){
+            return 1;
         }
     }
-    if(possivelRealizar(menor)!=1 && menor->realizado!=0 && inicio+menor->numSessao<=menor->fim){
-        return NULL;
+    return 0;
+}
+
+//Retorna Atividade que é mais rapido realizar
+AtividadeUC * getAtividadeMaisRapida(UC * unidade, int sessao){
+    NodeAtividade * atividades = NULL;
+    AtividadeUC * menor = NULL, * aux = NULL;
+    if(unidade!=NULL){
+        atividades = unidade->atividades;
+        while(atividades!=NULL && menor ==NULL){
+            aux = atividades->atual;
+            if(possivelRealizar(aux)){
+                if(verificaSessao(sessao,aux)){
+                    menor = aux;
+                }
+            }      
+            atividades = atividades->proxima;
+        }
+        if(menor!=NULL){
+            while(atividades!=NULL){
+                aux = atividades->atual;
+                if(possivelRealizar(aux)){
+                    if(verificaSessao(sessao,aux)){
+                        if(menor->numSessao > aux->numSessao){
+                            menor = aux;
+                        }
+                    }
+                }      
+                atividades = atividades->proxima;
+            }
+        }
     }
     return menor;
 }
 
-//Realiza Atividades na sessão
-void realizaAtividadesSessao(Sessao * sessao, int idSessao){
-    char id[3];
-    sprintf(id,"%d ", idSessao);
-    AtividadeUC * atividade = sessao->atividade1;
-    if(possivelRealizar(atividade)){
-        strcat(atividade->sessoes,id);
-        sessao->sessoesFaltaAtv1--;
-        if(sessao->sessoesFaltaAtv1==0){
-            atividade->realizado=1;
-            sessao->atividade1 = NULL;
+//Retorna a atividade para a sessao
+AtividadeUC * getAtividadeSessao(AtividadeUC * atv, NodeUC * ucs, int sessao, int index){
+    while(atv==NULL && index >=0){
+        atv = getAtividadeMaisRapida(getPiorUC(ucs, index),sessao);
+        if(atv==NULL){
+            index--;
         }
     }
-    atividade = sessao->atividade2;
-    if(possivelRealizar(atividade)){
-        strcat(atividade->sessoes,id);
-        sessao->sessoesFaltaAtv2--;
-        if(sessao->sessoesFaltaAtv2==0){
-            atividade->realizado=1;
-            sessao->atividade2 = NULL;
-        }
-    }
-    if(sessao->atividade1==NULL){
-        sessao->atividade1= sessao->atividade2;
-        sessao->sessoesFaltaAtv1=sessao->sessoesFaltaAtv2;
-        sessao->atividade2=NULL;
-        sessao->sessoesFaltaAtv2=0;
-    }
+    return atv;
 }
 
-void realizaAtividade(Sessao * sessao, int idSessao){
-    char id[3];
-    sprintf(id,"%d ", idSessao);
-    AtividadeUC * atividade = sessao->atividade1;
-    if(possivelRealizar(atividade)){
-        strcat(atividade->sessoes,id);
-        sessao->sessoesFaltaAtv1--;
-        if(sessao->sessoesFaltaAtv1==0){
-            atividade->realizado=1;
-            sessao->atividade1 = NULL;
-        }
-    }
-}
-
-void realiza(Dados * dados, int inicio, Sessao* sessao){
-    NodeUC * unidades = dados->ucs;
-    char id[3];
-    sprintf(id,"%d ", inicio);
-    int K = dados->K;
-    UC * unidade = NULL;
-    AtividadeUC * atividade = NULL;
-    while(K!=0 || atividade== NULL){
-        unidade = getPiorUC(unidades, K);
-        atividade = getMenorAtividade(unidade, inicio);
-        K--;
-    }
-    if(atividade!=NULL){
-        strcat(atividade->sessoes,id);
-        int falta = atividade->numSessao-1;
-        if(falta !=0){
-            if(sessao->atividade1==NULL){
-                sessao->atividade1= atividade;
-                sessao->sessoesFaltaAtv1= falta;
-            } else if(sessao->atividade2==NULL){
-                sessao->atividade2= atividade;
-                sessao->sessoesFaltaAtv2= falta;
-            }
-        } else{
-            atividade->realizado=1;
-        }
-    }
-}
 
 
 //Realizar Sessoes
 void realizarSessoes(Dados * dados){
-    Sessao * sessao = criarSessao();
+    NodeUC * ucs = dados->ucs;
+    //Sessao * sessao = criarSessao();
+    int index =0;
     for(int i = 0; i<getMaxSessao(dados->K,dados->ucs); i++){
-        if(sessao->atividade1 != NULL && sessao->atividade2 != NULL){
-            realizaAtividadesSessao(sessao, i);
+        /* if(sessao->atividade1 != NULL && sessao->atividade2 != NULL){
+            //realizaSessao(sessao, i);
+            calcularConcluidas(ucs); 
+            ordenarUC(ucs);
         } else if(sessao->atividade1 != NULL && sessao->atividade2 == NULL){
-            realizaAtividade(sessao,i);
-            realiza(dados,i,sessao);
+            index = dados->K;
+            calcularConcluidas(ucs); 
+            ordenarUC(ucs);
+            //realizaSessao(sessao, i);
+            calcularConcluidas(ucs); 
+            ordenarUC(ucs);
+            //realizaTarefa(sessao, i, ucs, index);
         } else{
-            realiza(dados,i,sessao);
-            realiza(dados,i,sessao);
-        }
+            index = dados->K;
+            calcularConcluidas(ucs); 
+            ordenarUC(ucs);
+            //realizaTarefa(sessao, i, ucs,index);
+            calcularConcluidas(ucs); 
+            ordenarUC(ucs);
+            //realizaTarefa(sessao, i, ucs, index);
+        } */
+        imprime(dados);
     }
-    apagarSessao(sessao);
+    //apagarSessao(sessao);
 }
 
 

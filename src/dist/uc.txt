@@ -1,5 +1,27 @@
-21002 - Álgebra Linear I     
+21002 - Álgebra Linear I
 21010 - Arquitetura de Computadores
+21173 - Introdução à Programação
 21174 - Sistemas Computacionais
 21175 - Análise Infinitesimal
-21173 - Introdução à Programação
+21176 - Ética e Práticas de Engenharia
+
+21010 - 0 - 6 - 1 - 1 - AF1
+21010 - 0 - 6 - 1 - 2 - AF2
+21010 - 0 - 6 - 1 - 1 - AF3
+21010 - 4 - 6 - 0 - 4 - AF4
+21010 - 4 - 8 - 0 - 4 - AF5
+21010 - 4 - 8 - 0 - 3 - AF6
+21010 - 4 - 12 - 1 - 4 - AF7
+21010 - 8 - 12 - 0 - 3 - AF8
+21010 - 8 - 15 - 0 - 4 - AF9
+21010 - 8 - 15 - 0 - 2 - AF10
+21173 - 0 - 6 - 1 - 1 - AF1
+21173 - 0 - 6 - 0 - 1 - AF2
+21173 - 3 - 8 - 1 - 2 - AF3
+21173 - 3 - 8 - 0 - 3 - AF4
+21173 - 7 - 12 - 0 - 2 - AF5
+21173 - 7 - 12 - 0 - 3 - AF6
+21173 - 7 - 15 - 1 - 3 - AF7
+21173 - 7 - 15 - 0 - 1 - AF8
+
+2
