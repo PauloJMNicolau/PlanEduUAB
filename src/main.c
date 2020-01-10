@@ -452,6 +452,7 @@ Dados  * lerFicheiro(char * ficheiro){
     iniciaDados(informacao);
     FILE * f;
     int linhaVazia=0;
+    //FILE *f=stdin; // ler os dados do stdin
     f = fopen(ficheiro, "r");
     if(!f){
         printf("Erro: Não foi possivel abrir o ficheiro!");
@@ -716,12 +717,6 @@ int verificaSessao(int sessao, AtividadeUC *atividade){
     return 0;
 }
 
-
-
-
-
-
-
 //Retorna a menor atividade na posicao
 AtividadeUC * getAtividadeMenor(int sessao, NodeAtividade * atividades, int posicao){
     NodeAtividade * aux = atividades;
@@ -737,54 +732,97 @@ AtividadeUC * getAtividadeMenor(int sessao, NodeAtividade * atividades, int posi
     return atv;
 }
 
+//Retorna 1 se atividade não existir na sessao
+//Retorna 0 caso exista
+int pesquisaSessao(Sessao * sessao, AtividadeUC * ativ){
+    int vazio = 1;
+    if(sessao!=NULL && ativ!= NULL){
+        if(sessao->atividade1 != ativ && sessao->atividade2!= ativ){
+            vazio = 0;
+        }
+    }
+    return vazio;
+}
+
+//Retorna 0 se sessao vazia ou Nula
+//Retorna 1 se existir elemento na atividade 1
+//Retorna 2 se existir elemento na atividade 2
+int sessaoVazia(Sessao * sessao){
+    if(sessao!=NULL){
+        if(sessao->atividade1 != NULL && sessao->atividade2!=NULL){
+            return 0;
+        } else if(sessao->atividade1 != NULL && sessao->atividade2 == NULL){
+            return 1;
+        } else if(sessao->atividade1 == NULL && sessao->atividade2 != NULL){
+            return 2;
+        }
+    }
+    return 0;
+}
+
+AtividadeUC*  pesquisaAtividade(Sessao * sessao, int K, NodeUC* ucs, int pos){
+    int index = K;
+    AtividadeUC * atividade= NULL, * aux = NULL;
+    UC * pior = NULL;
+    int valida=0;
+    int posicao=1;
+    calcularConcluidas(ucs); 
+    ordenarUC(ucs);
+    while(index>0 && atividade ==NULL){
+        pior = getPiorUC(ucs,index);
+        if(pior!=NULL){
+            posicao=1;
+            ordenarAtividadeDuracao(pior->atividades);
+            do{
+                aux = getAtividadeMenor(pos, pior->atividades,posicao);
+                valida = possivelRealizar(aux) && verificaSessao(pos,aux);
+                if(valida){
+                    if(pesquisaSessao(sessao,aux)){
+                        atividade= aux;
+                    }
+                }
+                posicao++;
+            } while(posicao < tamanhoAtividades(pior->atividades) && atividade ==NULL);
+            ordenarAtividadeNome(pior->atividades);
+        }
+        index--;
+    }
+    return atividade;
+}
+
+void realizaAtividade(Sessao * sessao, AtividadeUC * ativ, int id){
+    char texto[3];
+    sprintf(texto,"%d ",id);
+    if(ativ!=NULL){
+        strcat(ativ->sessoes, texto);
+        
+
+    }
+}
+
 //Realizar Sessoes
 void realizarSessoes(Dados * dados){
     NodeUC * ucs = dados->ucs;
-    UC * pior = NULL;
-    AtividadeUC * atividade = NULL, * aux=NULL;;
+    //UC * pior = NULL;
+    AtividadeUC * atividade = NULL; //, * aux=NULL;;
     Sessao * sessao = criarSessao();
-    int index =0, posicao = 1, valida=0;
-    for(int i = 0; i<getMaxSessao(dados->K,dados->ucs); i++){
-        for(int exec =0; exec < 2; exec++){
-            index = dados->K;
-            atividade=NULL;
-            valida=0;
-            calcularConcluidas(ucs); 
-            ordenarUC(ucs);
-            while(index>0 && atividade ==NULL){
-                pior = getPiorUC(ucs,index);
-                if(pior!=NULL){
-                    posicao=1;
-                    ordenarAtividadeDuracao(pior->atividades);
-                    do{
-                        aux = getAtividadeMenor(i, pior->atividades,posicao);
-                        valida = possivelRealizar(aux) && verificaSessao(i,aux);
-                        if(valida){
-                            atividade= aux;
-                        }
-                        posicao++;
-                    } while(posicao < tamanhoAtividades(pior->atividades) && atividade ==NULL);
-                    ordenarAtividadeNome(pior->atividades);
-                }
-                index--;
-            }
-            
+    //int index =0, posicao = 1, valida=0;
+    for(int i = 0; i<=getMaxSessao(dados->K,dados->ucs); i++){
+        switch (sessaoVazia(sessao)){
+        case 1:
 
+            break;
+        case 2:
+
+            break;
+        case 0:
+            for(int exec =0; exec < 2; exec++){
+                atividade = pesquisaAtividade(sessao, dados->K, ucs, i);
+            }
+            break;
         }
-        
         imprime(dados);
     } 
-    
-    
-    pior = getPiorUC(ucs, dados->K);
-    ordenarAtividadeDuracao(pior->atividades);
-
-    imprimeUC(pior);
-            printf("\n");
-            ordenarAtividadeNome(pior->atividades);
-            imprimeUC(pior);
-
-            
     apagarSessao(sessao);
     sessao=NULL;
 }
@@ -794,7 +832,6 @@ void realizarSessoes(Dados * dados){
  *  Função Principal    *
  * *********************/
 int main() {
-    //FILE *f=stdin; // ler os dados do stdin
     Dados * lista = NULL;
     lista=lerFicheiro("uc.txt");
     ordenarUC(lista->ucs);
