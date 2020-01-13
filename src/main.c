@@ -385,6 +385,7 @@ UC * criaUC(char * linha){
         exit(1);
     }
     char * parte;
+    strcpy(unidadeCurricular->nome," ");
     parte = strtok(linha,"-");
     unidadeCurricular->numero=atoi(parte);
     parte = strtok(NULL,"\n");
@@ -396,7 +397,6 @@ UC * criaUC(char * linha){
 //Cria Atividades
 AtividadeUC * criaAtividade(char * palavra){
     char * linha = palavra;
-    //strcpy(linha,palavra);
     AtividadeUC * atividade = malloc(sizeof(AtividadeUC));
     char * aux = " ";
     iniciaAtividade(atividade);
@@ -482,7 +482,7 @@ Dados  * lerFicheiro(char * ficheiro){
     }
     fclose(f);
     calcularConcluidas(informacao->ucs);
-    imprimeOutput(informacao); 
+    
     return informacao;
 }
 
@@ -913,6 +913,60 @@ void realizarSessoes(Dados * dados){
     sessao=NULL;
 }
 
+void guardarUC(NodeUC * ucs, FILE * fo){
+    NodeUC * aux = ucs;
+    char * auxtext = malloc(STR*sizeof(char));
+    while(aux!=NULL){
+        snprintf(auxtext,STR-1,"%d - %s\n", aux->atual->numero, aux->atual->nome);
+        int a = strlen(auxtext);
+        fwrite(auxtext, 1, a,fo);
+        aux= aux->proxima;
+    }
+    free(auxtext);
+}
+
+void guardarActividade(Dados * dados, FILE* fo){
+    NodeUC * ucs = dados->ucs;
+    NodeAtividade * atividades = dados->atividades;
+    char * auxtext = malloc(STR*sizeof(char));
+    while(ucs!=NULL){
+        NodeAtividade * auxAct = ucs->atual->atividades;
+        while(auxAct!=NULL){
+            snprintf(auxtext,STR-1,"%d - %d - %d - %d - %d - %s%d\n",
+             auxAct->atual->idUC, auxAct->atual->inicio, auxAct->atual->fim,
+             auxAct->atual->realizado, auxAct->atual->numSessao, auxAct->atual->nome, auxAct->atual->numero);
+            int a = strlen(auxtext);
+            fwrite(auxtext, 1, a,fo);
+            auxAct= auxAct->proxima;
+        }
+        ucs = ucs->proxima;
+    }
+    while(atividades!=NULL){
+        snprintf(auxtext,STR-1,"%d - %d - %d - %d - %d - %s%d\n",
+             atividades->atual->idUC, atividades->atual->inicio, atividades->atual->fim,
+             atividades->atual->realizado, atividades->atual->numSessao, atividades->atual->nome, atividades->atual->numero);
+        int a = strlen(auxtext);
+        fwrite(auxtext, 1, a,fo);
+        atividades= atividades->proxima;
+    }
+    free(auxtext);
+}
+
+void guarda(Dados * dados){
+    FILE * fo = fopen("output.txt", "w");
+    char a[2];
+    if(!fo){
+        printf("Erro: não foi possivel guardar a informação");
+        exit(1);
+    }
+    guardarUC(dados->ucs, fo);
+    fwrite("\n", 1, sizeof(char), fo);
+    guardarActividade(dados, fo);
+    fwrite("\n", 1, sizeof(char), fo);
+    sprintf(a, "%d",dados->K);
+    fwrite(a, 1, strlen(a), fo);
+    fclose(fo);
+}
 
 /************************
  *  Função Principal    *
@@ -920,10 +974,12 @@ void realizarSessoes(Dados * dados){
 int main() {
     Dados * lista = NULL;
     lista=lerFicheiro("uc.txt");
+    imprimeOutput(lista); 
     ordenarUC(lista->ucs);
     realizarSessoes(lista);
     ordenarUC(lista->ucs);
     imprime(lista);
+    guarda(lista);
     libertarMemoria(lista);
     lista=NULL;
 }
