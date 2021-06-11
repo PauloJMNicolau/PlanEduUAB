@@ -1,2 +1,2 @@
-# PlanEduUAB
-Planeamento Educativo UAB
+# PlanEduUAB - Efólio 
+Efólio Unidade Curricular - Introdução à Programação - UAB
